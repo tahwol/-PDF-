@@ -14,4 +14,4 @@
 - PyPDF2
 
 ## النشر على Streamlit
-[رابط التطبيق على Streamlit](ضع الرابط هنا بعد النشر)
+[رابط التطبيق على Streamlit](https://kfxeap8nuhyybdssfhppvt.streamlit.app/)
