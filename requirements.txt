@@ -4,3 +4,4 @@ numpy
 PyMuPDF
 setuptools
 wheel
+pytesseract
