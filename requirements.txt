@@ -1,7 +1,6 @@
-streamlit==1.24.0
-PyPDF2==3.0.1
-numpy==1.21.0
-pillow==9.0.0
-PyMuPDF==1.18.19
+streamlit
+PyPDF2
+numpy
+PyMuPDF
 setuptools
-distlib
+wheel
