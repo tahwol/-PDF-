@@ -1,4 +1,4 @@
-from PyMuPDF import fitz
+import fitz  # PyMuPDF
 import os
 import numpy as np
 import streamlit as st
