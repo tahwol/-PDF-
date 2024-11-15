@@ -5,3 +5,4 @@ PyMuPDF
 setuptools
 wheel
 pytesseract
+easyocr
