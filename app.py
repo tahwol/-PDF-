@@ -2,7 +2,7 @@ import fitz  # PyMuPDF
 import os
 import numpy as np
 import streamlit as st
-import pytesseract
+import easyocr
 from PIL import Image
 import shutil
 import zipfile
@@ -10,6 +10,9 @@ import zipfile
 # Function to split PDF based on blank pages and OCR
 def split_pdf_with_ocr(pdf, output_folder):
     document = fitz.open(stream=pdf.read(), filetype="pdf")
+
+    # Initialize EasyOCR reader
+    reader = easyocr.Reader(['en'], gpu=False)
 
     current_document = None
     documents = []
@@ -23,8 +26,9 @@ def split_pdf_with_ocr(pdf, output_folder):
         pix = page.get_pixmap()
         image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
-        # Use OCR to extract text
-        ocr_text = pytesseract.image_to_string(image).strip()
+        # Use EasyOCR to extract text
+        ocr_result = reader.readtext(np.array(image))
+        ocr_text = " ".join([res[1] for res in ocr_result]).strip()
 
         # Combine extracted text from page and OCR
         combined_text = text + ocr_text
