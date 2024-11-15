@@ -1,4 +1,0 @@
-streamlit
-PyPDF2
-numpy
-PyMuPDF==1.21.1
