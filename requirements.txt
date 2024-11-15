@@ -6,3 +6,4 @@ setuptools
 wheel
 pytesseract
 easyocr
+torch
