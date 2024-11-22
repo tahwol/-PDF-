@@ -1,8 +1,17 @@
 import fitz  # PyMuPDF
 import os
-import numpy as np
 import streamlit as st
-from PIL import Image
+import easyocr  # EasyOCR library
+
+# Initialize EasyOCR reader
+reader = easyocr.Reader(['en', 'ar'], gpu=False)
+
+# Function to extract text from an image using EasyOCR
+def extract_text_with_easyocr(page):
+    pix = page.get_pixmap()
+    image_bytes = pix.tobytes()  # Convert pixmap to bytes
+    results = reader.readtext(image_bytes, detail=0)  # Extract text with EasyOCR
+    return " ".join(results).strip()  # Join all detected text into a single string
 
 # Function to split PDF based on the specific text and remove the separating pages
 def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text):
@@ -16,7 +25,11 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
         page = document.load_page(page_number)
 
         # Extract text directly from the PDF
-        text = page.get_text().strip()
+        text = page.get_text("text").strip()
+
+        # If no text, use EasyOCR to extract text from the page
+        if not text:
+            text = extract_text_with_easyocr(page)
 
         # Check if the split text is in the extracted text
         if split_text in text:
@@ -36,7 +49,7 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
     if current_document is not None:
         documents.append(current_document)
 
-    # Save files to the desired folder
+    # Save the split documents to the output folder
     for idx, doc in enumerate(documents):
         doc_name = os.path.join(output_folder, f"document_{idx + 1}.pdf")
         doc.save(doc_name)
