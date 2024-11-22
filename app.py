@@ -1,21 +1,29 @@
 import fitz  # PyMuPDF
 import os
+import numpy as np
 import streamlit as st
-from concurrent.futures import ThreadPoolExecutor
+from PIL import Image
+from pytesseract import image_to_string  # OCR library
 
-# Function to split PDF based on specific text and remove the separating pages
+# Function to split PDF based on the specific text and remove the separating pages
 def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text):
     document = fitz.open(stream=pdf.read(), filetype="pdf")
+
     current_document = None
     documents = []
     output_files = []
 
-    def process_page(page_number):
-        nonlocal current_document
+    for page_number in range(len(document)):
         page = document.load_page(page_number)
 
         # Extract text directly from the PDF
         text = page.get_text().strip()
+
+        # If no text, use OCR to extract text from the page
+        if not text:
+            pix = page.get_pixmap()
+            image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            text = image_to_string(image).strip()
 
         # Check if the split text is in the extracted text
         if split_text in text:
@@ -24,16 +32,12 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
                 documents.append(current_document)
                 current_document = None
             # Skip adding this page (do not include it in any document)
-            return
+            continue
 
         # Start a new document or add the page to the current document
         if current_document is None:
             current_document = fitz.open()  # Create a new document
         current_document.insert_pdf(document, from_page=page_number, to_page=page_number)
-
-    # Process all pages in parallel
-    with ThreadPoolExecutor() as executor:
-        executor.map(process_page, range(len(document)))
 
     # Add the last document if any
     if current_document is not None:
@@ -49,6 +53,8 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
     return output_files
 
 # Streamlit Interface
+
+# Arabic Title with custom styles
 st.markdown("""
 <div style="text-align: center; line-height: 2; font-size: 20px; direction: rtl;">
     <strong>تطبيق تقسيم ملفات PDF</strong><br>
