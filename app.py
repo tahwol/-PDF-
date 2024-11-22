@@ -3,11 +3,6 @@ import os
 import streamlit as st
 import shutil
 
-# Function to check if a page contains specific text
-def page_contains_text(page, split_text):
-    text = page.get_text("text").strip()  # Extract text from the page
-    return split_text in text  # Check if the page contains the split text
-
 # Function to split PDF based on user-provided text and remove separator pages
 def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text):
     document = fitz.open(stream=pdf.read(), filetype="pdf")
@@ -49,8 +44,15 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
     return output_files
 
 # Streamlit Interface
-st.title("PDF Splitter with Flexible Separator Text")
-st.write("Upload a PDF file and split it based on a separator text provided by you.")
+
+# Arabic Title with custom styles
+st.markdown("""
+<div style="text-align: center; line-height: 2; font-size: 20px; direction: rtl;">
+    <strong>تطبيق تقسيم ملفات PDF</strong><br>
+    بناءً على ورقة تحتوي على نص فاصل: <span style="color: navy;">warakafaselasamirhetawy</span><br>
+    <span style="color: maroon;">تصميم: المستشار سمير عبد العظيم حيطاوي</span>
+</div>
+""", unsafe_allow_html=True)
 
 # File uploader for PDF files
 uploaded_file = st.file_uploader("Upload PDF File", type=["pdf"])
@@ -69,7 +71,7 @@ if uploaded_file and split_text:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        st.write(f"Processing file: {uploaded_file.name}...")
+        st.write(f"جاري معالجة الملف: {uploaded_file.name}...")
         output_files = split_pdf_based_on_text_and_remove_separator(uploaded_file, output_folder, split_text)
 
         if output_files:
@@ -85,7 +87,7 @@ if uploaded_file and split_text:
                     mime="application/zip"
                 )
 
-            st.success("Processing completed successfully!")
+            st.success("تم معالجة جميع الملفات بنجاح!")
         else:
             st.warning("No output files were generated. Please check the separator text.")
     except Exception as e:
