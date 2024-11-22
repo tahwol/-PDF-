@@ -54,41 +54,54 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# File uploader for PDF files
-uploaded_file = st.file_uploader("Upload PDF File", type=["pdf"])
+# File uploader for multiple PDF files
+uploaded_files = st.file_uploader("Upload one or more PDF files", type=["pdf"], accept_multiple_files=True)
 
 # User input for the separator text
 split_text = st.text_input("Enter the separator text:", value="warakafaselasamirhetawy")
 
-if uploaded_file and split_text:
+if uploaded_files and split_text:
     # Use a safe folder path
     output_folder = "./temp_output"
     os.makedirs(output_folder, exist_ok=True)
 
     try:
-        # Save the uploaded file
-        file_path = os.path.join(output_folder, uploaded_file.name)
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+        for uploaded_file in uploaded_files:
+            # Save the uploaded file
+            file_path = os.path.join(output_folder, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
 
-        st.write(f"جاري معالجة الملف: {uploaded_file.name}...")
-        output_files = split_pdf_based_on_text_and_remove_separator(uploaded_file, output_folder, split_text)
+            st.write(f"جاري معالجة الملف: {uploaded_file.name}...")
+            output_files = split_pdf_based_on_text_and_remove_separator(uploaded_file, output_folder, split_text)
 
-        if output_files:
-            # Zip all the processed files
-            zip_path = os.path.join(output_folder, "processed_files.zip")
-            shutil.make_archive(zip_path.replace(".zip", ""), 'zip', output_folder)
+            if output_files:
+                # Provide download buttons for individual PDF files
+                for idx, file in enumerate(output_files):
+                    unique_key = f"{uploaded_file.name}_{idx}"
+                    with open(file, "rb") as f:
+                        st.download_button(
+                            label=f"تحميل {os.path.basename(file)}",
+                            data=f,
+                            file_name=os.path.basename(file),
+                            mime="application/pdf",
+                            key=unique_key
+                        )
+            else:
+                st.warning(f"No output files generated for {uploaded_file.name}. Please check the separator text.")
 
-            with open(zip_path, "rb") as zf:
-                st.download_button(
-                    label="Download All Processed Files as ZIP",
-                    data=zf,
-                    file_name="processed_files.zip",
-                    mime="application/zip"
-                )
+        # Zip all the processed files for batch download
+        zip_path = os.path.join(output_folder, "processed_files.zip")
+        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', output_folder)
 
-            st.success("تم معالجة جميع الملفات بنجاح!")
-        else:
-            st.warning("No output files were generated. Please check the separator text.")
+        with open(zip_path, "rb") as zf:
+            st.download_button(
+                label="Download All Processed Files as ZIP",
+                data=zf,
+                file_name="processed_files.zip",
+                mime="application/zip"
+            )
+
+        st.success("تم معالجة جميع الملفات بنجاح!")
     except Exception as e:
         st.error(f"An error occurred: {e}")
