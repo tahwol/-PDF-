@@ -4,6 +4,7 @@ numpy
 PyMuPDF
 setuptools
 wheel
+paddleocr
 pytesseract
 easyocr
 torch
