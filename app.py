@@ -1,11 +1,13 @@
 import fitz  # PyMuPDF
 import os
+import numpy as np
 import streamlit as st
-import shutil
+from PIL import Image
 
-# Function to split PDF based on user-provided text and remove separator pages
+# Function to split PDF based on the specific text and remove the separating pages
 def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text):
     document = fitz.open(stream=pdf.read(), filetype="pdf")
+
     current_document = None
     documents = []
     output_files = []
@@ -13,8 +15,8 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
     for page_number in range(len(document)):
         page = document.load_page(page_number)
 
-        # Extract text from the page
-        text = page.get_text("text").strip()
+        # Extract text directly from the PDF
+        text = page.get_text().strip()
 
         # Check if the split text is in the extracted text
         if split_text in text:
@@ -34,7 +36,7 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
     if current_document is not None:
         documents.append(current_document)
 
-    # Save the split documents to the output folder
+    # Save files to the desired folder
     for idx, doc in enumerate(documents):
         doc_name = os.path.join(output_folder, f"document_{idx + 1}.pdf")
         doc.save(doc_name)
@@ -54,54 +56,34 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# File uploader for multiple PDF files
 uploaded_files = st.file_uploader("Upload one or more PDF files", type=["pdf"], accept_multiple_files=True)
 
-# User input for the separator text
-split_text = st.text_input("Enter the separator text:", value="warakafaselasamirhetawy")
+if uploaded_files:
+    # Define the text to split the PDF by
+    split_text = "warakafaselasamirhetawy"  # النص الفاصل الثابت
 
-if uploaded_files and split_text:
-    # Use a safe folder path
-    output_folder = "./temp_output"
-    os.makedirs(output_folder, exist_ok=True)
+    # Base folder for all outputs
+    base_folder = "E:\\الملفات_المقسمة"
+    os.makedirs(base_folder, exist_ok=True)
 
-    try:
-        for uploaded_file in uploaded_files:
-            # Save the uploaded file
-            file_path = os.path.join(output_folder, uploaded_file.name)
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+    for uploaded_file in uploaded_files:
+        # Create a specific folder for each uploaded file
+        output_folder = os.path.join(base_folder, uploaded_file.name.replace(".pdf", ""))
+        os.makedirs(output_folder, exist_ok=True)
 
-            st.write(f"جاري معالجة الملف: {uploaded_file.name}...")
-            output_files = split_pdf_based_on_text_and_remove_separator(uploaded_file, output_folder, split_text)
+        st.write(f"جاري معالجة الملف: {uploaded_file.name}...")
+        output_files = split_pdf_based_on_text_and_remove_separator(uploaded_file, output_folder, split_text)
 
-            if output_files:
-                # Provide download buttons for individual PDF files
-                for idx, file in enumerate(output_files):
-                    unique_key = f"{uploaded_file.name}_{idx}"
-                    with open(file, "rb") as f:
-                        st.download_button(
-                            label=f"تحميل {os.path.basename(file)}",
-                            data=f,
-                            file_name=os.path.basename(file),
-                            mime="application/pdf",
-                            key=unique_key
-                        )
-            else:
-                st.warning(f"No output files generated for {uploaded_file.name}. Please check the separator text.")
+        # Provide download buttons for individual PDF files
+        for idx, file in enumerate(output_files):
+            unique_key = f"{uploaded_file.name}_{os.path.basename(file)}_{idx}"  # Unique key for each button
+            with open(file, "rb") as f:
+                st.download_button(
+                    label=f"تحميل {os.path.basename(file)}",
+                    data=f,
+                    file_name=os.path.basename(file),
+                    mime="application/pdf",
+                    key=unique_key  # Use unique key for each button
+                )
 
-        # Zip all the processed files for batch download
-        zip_path = os.path.join(output_folder, "processed_files.zip")
-        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', output_folder)
-
-        with open(zip_path, "rb") as zf:
-            st.download_button(
-                label="Download All Processed Files as ZIP",
-                data=zf,
-                file_name="processed_files.zip",
-                mime="application/zip"
-            )
-
-        st.success("تم معالجة جميع الملفات بنجاح!")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+    st.success("تم معالجة جميع الملفات بنجاح!")
