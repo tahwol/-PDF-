@@ -3,7 +3,10 @@ import os
 import numpy as np
 import streamlit as st
 from PIL import Image
-from pytesseract import image_to_string  # OCR library
+from paddleocr import PaddleOCR  # بديل سريع
+
+# إعداد PaddleOCR
+ocr = PaddleOCR(lang='ar')  # دعم اللغة العربية
 
 # Function to split PDF based on the specific text and remove the separating pages
 def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text):
@@ -23,7 +26,8 @@ def split_pdf_based_on_text_and_remove_separator(pdf, output_folder, split_text)
         if not text:
             pix = page.get_pixmap()
             image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            text = image_to_string(image).strip()
+            ocr_results = ocr.ocr(np.array(image))  # Perform OCR
+            text = " ".join([line[1][0] for line in ocr_results[0]]).strip()
 
         # Check if the split text is in the extracted text
         if split_text in text:
